@@ -1688,8 +1688,33 @@ int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int b
             simd_abpoa_lg_align_sequence_to_graph_core(int16_t, _simd_p16, SIMDSetOnei16, SIMDMaxi16, \
                     SIMDAddi16, SIMDSubi16, SIMDShiftOneNi16, SIMDSetIfGreateri16, SIMDGetIfGreateri16);
         } else if (abpt->gap_mode == ABPOA_AFFINE_GAP) {
-            simd_abpoa_ag_align_sequence_to_graph_core(int16_t, _simd_p16, SIMDSetOnei16, SIMDMaxi16, \
-                    SIMDAddi16, SIMDSubi16, SIMDShiftOneNi16, SIMDSetIfGreateri16, SIMDGetIfGreateri16, SIMDSetIfEquali16);
+            {               
+                simd_abpoa_ag_var(int16_t, _simd_p16, SIMDSetOnei16, SIMDShiftOneNi16, SIMDAddi16);                             
+                simd_abpoa_ag_first_dp(int16_t);                                                                
+                for (index_i=beg_index+1, dp_i=1; index_i<end_index; ++index_i, ++dp_i) {                       
+                    if (index_map[index_i] == 0) continue;                                                      
+                    simd_abpoa_ag_dp(int16_t, SIMDShiftOneNi16, SIMDMaxi16, SIMDAddi16, SIMDSubi16, SIMDGetIfGreateri16, SIMDSetIfGreateri16, SIMDSetIfEquali16); 
+                    if (abpt->align_mode == ABPOA_LOCAL_MODE) {                                                 
+                        simd_abpoa_max_in_row(int16_t, SIMDSetIfGreateri16, SIMDGetIfGreateri16);                     
+                        set_global_max_score(max, dp_i, max_i);                                                 
+                    } else if (abpt->align_mode == ABPOA_EXTEND_MODE) {                                         
+                        simd_abpoa_max_in_row(int16_t, SIMDSetIfGreateri16, SIMDGetIfGreateri16);                     
+                        set_extend_max_score(max, dp_i, max_i);                                                 
+                    }                                                                                           
+                    if (abpt->wb >= 0) {                                                                        
+                        if (abpt->align_mode == ABPOA_GLOBAL_MODE) {                                            
+                            simd_abpoa_max_in_row(int16_t, SIMDSetIfGreateri16, SIMDGetIfGreateri16);                 
+                        }                                                                                       
+                        simd_abpoa_ada_max_i;                                                                   
+                    }                                                                                           
+                }                                                                                               
+                if (abpt->align_mode == ABPOA_GLOBAL_MODE) simd_abpoa_global_get_max(int16_t, DP_HEF, 3*dp_sn); 
+                res->best_score = best_score;                                                                   
+            /* simd_abpoa_print_ag_matrix(int16_t, beg_index, end_index); fprintf(stderr, "best_score: (%d, %d) -> %d\n", best_i, best_j, best_score); */ 
+                if (abpt->ret_cigar) simd_abpoa_ag_backtrack(int16_t);                                          
+                simd_abpoa_free_var; SIMDFree(GAP_E1S);                                                         
+            }
+
         } else if (abpt->gap_mode == ABPOA_CONVEX_GAP) {
             simd_abpoa_cg_align_sequence_to_graph_core(int16_t, _simd_p16, SIMDSetOnei16, SIMDMaxi16, \
                     SIMDAddi16, SIMDSubi16, SIMDShiftOneNi16, SIMDSetIfGreateri16, SIMDGetIfGreateri16, SIMDSetIfEquali16);

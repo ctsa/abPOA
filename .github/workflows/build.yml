@@ -1,0 +1,38 @@
+
+name: Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  ubuntu:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+  
+      - name: Build
+        run: make
+
+      - name: Test
+        run: ./bin/abpoa ./test_data/seq.fa > cons.fa
+
+  macos:
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Build
+        run: make
+
+      - name: Test
+        run: ./bin/abpoa ./test_data/seq.fa > cons.fa
+      

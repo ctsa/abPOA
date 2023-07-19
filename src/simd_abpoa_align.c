@@ -1694,8 +1694,23 @@ int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int b
                 for (index_i=beg_index+1, dp_i=1; index_i<end_index; ++index_i, ++dp_i) {                       
                     if (index_map[index_i] == 0) continue;                                                      
                     simd_abpoa_ag_dp(int16_t, SIMDShiftOneNi16, SIMDMaxi16, SIMDAddi16, SIMDSubi16, SIMDGetIfGreateri16, SIMDSetIfGreateri16, SIMDSetIfEquali16); 
-                    if (abpt->align_mode == ABPOA_LOCAL_MODE) {                                                 
-                        simd_abpoa_max_in_row(int16_t, SIMDSetIfGreateri16, SIMDGetIfGreateri16);                     
+                    if (abpt->align_mode == ABPOA_LOCAL_MODE) {
+                        { 
+                            /* select max dp_h */                                                    
+                            max = inf_min, max_i = -1;                                               
+                            SIMDi a = dp_h[end_sn], b = qi[end_sn];                                  
+                            if (end_sn == qlen / pn) SIMDSetIfGreateri16(a, zero, b, SIMD_INF_MIN, a);  
+                            for (i = beg_sn; i < end_sn; ++i) {                                      
+                                SIMDGetIfGreateri16(b, a, dp_h[i], a, qi[i], b);                        
+                            }                                                                        
+                            _dp_h = (int16_t*)&a, _qi = (int16_t*)&b;                                
+                            for (i = 0; i < pn; ++i) {                                               
+                                if (_dp_h[i] > max) {                                                
+                                    max = _dp_h[i]; max_i = _qi[i];                                  
+                                }                                                                    
+                            }                                                                        
+                        }
+
                         set_global_max_score(max, dp_i, max_i);                                                 
                     } else if (abpt->align_mode == ABPOA_EXTEND_MODE) {                                         
                         simd_abpoa_max_in_row(int16_t, SIMDSetIfGreateri16, SIMDGetIfGreateri16);                     

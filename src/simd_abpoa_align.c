@@ -1689,7 +1689,10 @@ int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int b
                     SIMDAddi16, SIMDSubi16, SIMDShiftOneNi16, SIMDSetIfGreateri16, SIMDGetIfGreateri16);
         } else if (abpt->gap_mode == ABPOA_AFFINE_GAP) {
             {               
-                simd_abpoa_ag_var(int16_t, _simd_p16, SIMDSetOnei16, SIMDShiftOneNi16, SIMDAddi16);                             
+                simd_abpoa_var(int16_t, _simd_p16, SIMDSetOnei16, SIMDShiftOneNi16);
+                simd_abpoa_ag_only_var(int16_t, SIMDSetOnei16, SIMDAddi16);
+                simd_abpoa_init_var(int16_t);
+
                 simd_abpoa_ag_first_dp(int16_t);                                                                
                 for (index_i=beg_index+1, dp_i=1; index_i<end_index; ++index_i, ++dp_i) {                       
                     if (index_map[index_i] == 0) continue;                                                      

@@ -1691,7 +1691,36 @@ int simd_abpoa_align_sequence_to_subgraph(abpoa_t *ab, abpoa_para_t *abpt, int b
             {               
                 simd_abpoa_var(int16_t, _simd_p16, SIMDSetOnei16, SIMDShiftOneNi16);
                 simd_abpoa_ag_only_var(int16_t, SIMDSetOnei16, SIMDAddi16);
-                simd_abpoa_init_var(int16_t);
+                {                                                             \
+                    /* generate the query profile */
+                    for (i = 0; i < qp_sn * abpt->m; ++i) qp[i] = SIMD_INF_MIN;
+                    for (k = 0; k < abpt->m; ++k) { /* SIMD parallelization */
+                        int *p = &mat[k * abpt->m];
+                        int16_t *_qp = (int16_t*)(qp + k * qp_sn); _qp[0] = 0;
+                        for (j = 0; j < qlen; ++j) _qp[j+1] = (int16_t)p[query[j]];
+                        for (j = qlen+1; j < qp_sn * pn; ++j) _qp[j] = 0;
+                    }
+                    if (abpt->wb>=0 || abpt->align_mode==ABPOA_LOCAL_MODE || abpt->align_mode==ABPOA_EXTEND_MODE){
+                        _qi = (int16_t*)qi; /* query index */
+                        for (i = 0; i <= qlen; ++i) _qi[i] = i;
+                        for (i = qlen+1; i < (qlen/pn+1) * pn; ++i) _qi[i] = -1;
+                    }
+                    /* for backtrack */
+                    dp_beg=abm->dp_beg, dp_end=abm->dp_end, dp_beg_sn=abm->dp_beg_sn, dp_end_sn=abm->dp_end_sn;
+                    /* index of pre-node */
+                    pre_index = (int**)_err_calloc(matrix_row_n, sizeof(int*));
+                    pre_n = (int*)_err_calloc(matrix_row_n, sizeof(int));
+                    for (index_i=beg_index+1, dp_i=1; index_i<=end_index; ++index_i, ++dp_i) {
+                        node_id = abpoa_graph_index_to_node_id(graph, index_i);
+                        pre_n[dp_i] = graph->node[node_id].in_edge_n;
+                        pre_index[dp_i] = (int*)_err_malloc(pre_n[dp_i] * sizeof(int));
+                        for (j = _pre_n = 0; j < pre_n[dp_i]; ++j) {
+                            _pre_index = abpoa_graph_node_id_to_index(graph, graph->node[node_id].in_id[j]);
+                            if (index_map[_pre_index]) pre_index[dp_i][_pre_n++] = _pre_index-beg_index;
+                        }
+                        pre_n[dp_i] = _pre_n;
+                    }
+                }
 
                 simd_abpoa_ag_first_dp(int16_t);                                                                
                 for (index_i=beg_index+1, dp_i=1; index_i<end_index; ++index_i, ++dp_i) {                       
